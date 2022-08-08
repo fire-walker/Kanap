@@ -1,40 +1,34 @@
-//Récupération des produits
-fetch("http://localhost:3000/api/produtcs")
-    .then(function (res){
+// Récupération des produits
+fetch("http://localhost:3000/api/products")
+    .then((res) => {
         if (res.ok) {
             return res.json();
         }
     })
-    .then(function(value){
-        console.log(value);
+    .then((products) => {
+        console.log(products);
+        createProducts(products);
     })
-    .catch(function(error) {
-        alert(); //une erreur est survenue
+    .catch((error) => {
+        alert(); // Une erreur est survenue
     });
 
 
-//Affichage des produits dans le DOM
-function createProducts(products){
+// Affichage des produits dans le DOM
+function createProducts(products) {
+    const sectionItems = document.getElementById('items');
+    let content = '';
+
     for (let product of products) {
-
-        let productLink = document.createElement("a");
-        document.querySelector("#items").appendChild(productLink);
-        productLink.href = `../../html/product.html?id=${products[product]}._id`;
-
-        let productArticle = document.createElement("article");
-        productLink.appendChild(productArticle);
-
-        let productImg = document.createElement("img");
-        productArticle.appendChild(productImg);
-        productImg.src = product.imageUrl;
-        productImg.alt = product.altTxt;
-
-        let productName = document.createElement("h3");
-        productArticle.appendChild(productName);
-        productName.classList.add("productName");
-
-        let productDescription = document.createElement("p");
-        productArticle.appendChild(productDescription);
-        productDescription.classList.add("productDescription");
+        content += `
+                <a href="./product.html?id=${product._id}">
+                    <article>
+                        <img src="${product.imageUrl}" alt="${product.altTxt}">
+                        <h3 class="productName">${product.name}</h3>
+                        <p class="productDescription">${product.description}</p>
+                    </article>
+                </a>`;
     }
+
+    sectionItems.innerHTML = content;
 }
