@@ -3,17 +3,19 @@ const url = new URL(document.location.href).searchParams;
 const id = url.get("id");
 const cart = getCart();
 
+const colors = document.getElementById("colors");
+const button = document.getElementById("addToCart");
+const productQuantity = document.getElementById("quantity");
+
+productQuantity.addEventListener("change", handleCountChange);
 
 /***************** On load *******************/
 (async function init() {
     await createProduct(id);
 
-    const button = document.getElementById("addToCart");
-    const colors = document.getElementById("colors");
     const image = document.getElementById("image");
     const description = document.getElementById("description");
-    const quantity = document.getElementById("quantity");
-    const price = document.getElementById("price");
+    //const price = document.getElementById("price");
     const title = document.getElementById("title");
 
     /**
@@ -23,56 +25,41 @@ const cart = getCart();
      * - Ajouter le produit au panier
      */
     button.addEventListener("click", () => {
-        const value = Number(quantity.value);
+        const quantity = Number(productQuantity.value);
 
-        if (colors.value && value > 0 && value < 100) {
+        if (colors.value && quantity > 0 && quantity < 100) {
             const product = {
                 altTxt: image.alt,
                 colors: colors.value,
                 description: description.innerHTML,
                 id: id,
                 imageUrl: image.src,
-                price: price.innerHTML,
-                quantity: value,
+                //price: price.innerHTML,
+                quantity: quantity,
                 title: title.innerHTML
             };
 
             addToCart(product);
         }
-    });})();
+    });
+})();
 
 function addToCart(product) {
+    const _colors = colors.value;
+
     // - Lorsqu’on ajoute un produit au panier, si celui-ci n'était pas déjà présent dans le panier, on ajoute un nouvel élément dans l’array.
     // - Lorsqu’on ajoute un produit au panier, si celui-ci était déjà présent dans le panier (même id + même couleur), on incrémente simplement la quantité du produit correspondant dans l’array
+    let productCart = cart.find(p => p.id === id && p.colors === _colors);
 
-    // TODO :
-    // - Récupérer le contenu du LS -> appeler la fonction getcart
-
-    if (localStorage.getItem("products") !== null) {
-        getCart(product);
-
+    // Si un objet existe déjà dans le LS et correspond à l'objet que l'on souhaite rajouter, modifier la quantité
+    // Sinon, on rajoute le produit dans le localStorage.
+    if (productCart) {
+        productCart.quantity = productCart.quantity + product.quantity;
     } else {
-        console.log(id);
-        console.log(cart);
-        let productCart = cart.find(p => p.id === id && p.colors === colors.value);
-
-        // - Si un objet existe déjà dans le LS et correspond à l'objet que l'on souhaite rajouter, modifier la quantité
-        if (productCart !== undefined) {
-            productCart.quantity++;
-
-            // - S'il n'y a aucun objet correspondant dans le LS, ajouter l'objet au LS
-        } else {
-            cart.push(product);
-        }
-
-        saveCart(cart);
-        console.log(productCart?.quantity);
-
-        //} else {
-        // TODO :
-        // - Créer une clé qui contiendra la valeur du produit [{}]
-        // - Appeler la fonction savecart
+        cart.push(product);
     }
+
+    saveCart(cart);
 }
 
 // Requête API d"un seul produit par son id
@@ -133,3 +120,20 @@ function getCart() {
 function hasCart() {
     return !!localStorage.getItem("cart");
 }
+
+let quantity = 0;
+const checkQuantity = () => quantity >= 1 && quantity <= 100;
+
+function handleCountChange(event) {
+    quantity = Number(event.target.value);
+    const hasValidQuantity = checkQuantity();
+    const _colors = colors.value;
+
+    if (hasValidQuantity && _colors !== null) {
+        /* [DIFF] 1/2 - change attribute from disabled to aria-disabled */
+        button.setAttribute("aria-disabled", "false");
+    } else {
+        button.setAttribute("aria-disabled", "true");
+    }
+}
+
