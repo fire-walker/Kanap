@@ -7,7 +7,7 @@ fetch("http://localhost:3000/api/products")
     })
     .then((products) => {
         console.log(products);
-        createProducts(products);
+        displayProducts(products);
     })
     .catch((error) => {
         alert(error); // Une erreur est survenue
