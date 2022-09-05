@@ -1,13 +1,13 @@
+const PRODUCTS_KEY_LOCALSTORAGE = 'products';
+
 // Récupération des paramètres id de l"url
 const url = new URL(document.location.href).searchParams;
 const id = url.get("id");
 const cart = getCart();
 
-const colors = document.getElementById("colors");
 const button = document.getElementById("addToCart");
-const productQuantity = document.getElementById("quantity");
-
-productQuantity.addEventListener("change", handleCountChange);
+const productColors = document.getElementById("colors-select");
+const productQuantity = document.getElementById("item-quantity");
 
 /***************** On load *******************/
 (async function init() {
@@ -27,10 +27,10 @@ productQuantity.addEventListener("change", handleCountChange);
     button.addEventListener("click", () => {
         const quantity = Number(productQuantity.value);
 
-        if (colors.value && quantity > 0 && quantity < 100) {
+        if (productColors.value && quantity > 0 && quantity < 100) {
             const product = {
                 altTxt: image.alt,
-                colors: colors.value,
+                colors: productColors.value,
                 description: description.innerHTML,
                 id: id,
                 imageUrl: image.src,
@@ -42,14 +42,17 @@ productQuantity.addEventListener("change", handleCountChange);
             addToCart(product);
         }
     });
+
+    productColors.addEventListener("change", buttonColorQuantityChange);
+    productQuantity.addEventListener("change", buttonColorQuantityChange);
 })();
 
 function addToCart(product) {
-    const _colors = colors.value;
+    const colors = productColors.value;
 
     // - Lorsqu’on ajoute un produit au panier, si celui-ci n'était pas déjà présent dans le panier, on ajoute un nouvel élément dans l’array.
     // - Lorsqu’on ajoute un produit au panier, si celui-ci était déjà présent dans le panier (même id + même couleur), on incrémente simplement la quantité du produit correspondant dans l’array
-    let productCart = cart.find(p => p.id === id && p.colors === _colors);
+    let productCart = cart.find(p => p.id === id && p.colors === colors);
 
     // Si un objet existe déjà dans le LS et correspond à l'objet que l'on souhaite rajouter, modifier la quantité
     // Sinon, on rajoute le produit dans le localStorage.
@@ -79,9 +82,6 @@ async function getProduct(id) {
 async function createProduct(id) {
     const product = await getProduct(id);
 
-    console.log(product)
-
-    const productColors = document.getElementById("colors");
     const productTemplate = document.querySelector(".item__img");
     const productPhoto = `<img src="${product.imageUrl}" id="image" alt="${product.altTxt}">`;
 
@@ -94,6 +94,8 @@ async function createProduct(id) {
     const productDescription = document.getElementById("description");
     productDescription.innerHTML = product.description;
 
+    console.log(productColors);
+
     for (let i = 0; i < product.colors.length; i++) {
         let colorOption = document.createElement("option");
         colorOption.value = product.colors[i];
@@ -105,35 +107,28 @@ async function createProduct(id) {
     productTemplate.innerHTML = productPhoto;
 }
 
-function saveCart(cart) {
-    localStorage.setItem("cart", JSON.stringify(cart));
+function saveCart(products) {
+    localStorage.setItem(PRODUCTS_KEY_LOCALSTORAGE, JSON.stringify(products));
 }
 
 function getCart() {
-    if (hasCart()) {
-        return JSON.parse(localStorage.getItem("cart"));
-    } else {
-        return [];
-    }
+    return hasCart() ? JSON.parse(localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE)) : [];
 }
 
 function hasCart() {
-    return !!localStorage.getItem("cart");
+    return !!localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE);
 }
 
-let quantity = 0;
-const checkQuantity = () => quantity >= 1 && quantity <= 100;
+function buttonColorQuantityChange() {
+    const colorsDefaultValue = 'Sélectionnez une couleur';
+    const colorsSelectedValue = productColors.value;
 
-function handleCountChange(event) {
-    quantity = Number(event.target.value);
-    const hasValidQuantity = checkQuantity();
-    const _colors = colors.value;
+    const quantityValue = Number(productQuantity.value);
+    const checkQuantity = quantityValue >= 1 && quantityValue <= 100;
 
-    if (hasValidQuantity && _colors !== null) {
-        /* [DIFF] 1/2 - change attribute from disabled to aria-disabled */
+    if (checkQuantity && (colorsSelectedValue && colorsSelectedValue !== colorsDefaultValue)) {
         button.setAttribute("aria-disabled", "false");
     } else {
         button.setAttribute("aria-disabled", "true");
     }
 }
-
