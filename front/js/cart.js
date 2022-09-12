@@ -3,20 +3,7 @@ const PRODUCTS_KEY_LOCALSTORAGE = 'products';
 const cartTitle = document.getElementById('cart-title');
 let products = [];
 
-async function getProduct(id) {
-    console.log("debut fonction getproduct");
-    return await fetch(`http://localhost:3000/api/products/${id}`)
-        .then((res) => {
-            return res.json()
-        })
-        .then((product) => {
-            console.log("fin fonction getProduct");
-            return product;
-        })
-        .catch((error) => {
-            console.error("Fetch Error", error);
-        });
-}
+/** Affichage des produits stockés dans le LS **/
 
 if (localStorageHas(PRODUCTS_KEY_LOCALSTORAGE)) {
     products = JSON.parse(localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE));
@@ -26,45 +13,76 @@ if (localStorageHas(PRODUCTS_KEY_LOCALSTORAGE)) {
     cartTitle.textContent = 'Le panier est vide';
 }
 
+const itemsContainer = document.getElementById('cart__items');
+
 function displayProducts() {
-    const itemsContainer = document.getElementById('cart__items');
     const fragment = document.createDocumentFragment();
 
-     // for (let product of products) {
-     //
-     //     const element = createProduct(product);
-     //     fragment.appendChild(element);
-     // }
+     for (let i = 0; i < products.length; i++) {
+         const product = products[i];
+         //console.log(product);
 
-    function newProduct(product, response = "default value") {
-        console.log("début fonction testProduct");
-        // console.log(response);
 
+         /** Fetch API pour récupérer le prix des produits qui n'est pas stocké dans le LS **/
+
+         fetch(`http://localhost:3000/api/products/` + product.id)
+             .then((res) => {
+                 return res.json()
+             })
+             .then((apiProduct) => {
+                 newProduct(product, apiProduct.price);
+                 //console.log(apiProduct);
+                 //console.log(apiProduct.price);
+
+                 if (i === products.length - 1) {
+                     itemsContainer.appendChild(fragment);
+                 }
+
+                 /** Affichage des totaux prix et quantité **/
+
+                 function displayCartPrice() {
+                     let totalPrice = 0;
+                     const cartPrice = document.getElementById('totalPrice');
+
+                     products.forEach((product) => {
+                         const totalProductPrice = product.price * product.quantity;
+                         totalPrice += totalProductPrice;
+                     })
+
+                     cartPrice.innerHTML = totalPrice;
+                 }
+
+                 function displayCartQuantity() {
+                     let totalQuantity = 0;
+                     const cartQuantity = document.getElementById('totalQuantity');
+
+                     products.forEach((product) => {
+                         const totalProductQuantity = product.quantity;
+                         totalQuantity += totalProductQuantity;
+                     })
+
+                     cartQuantity.innerHTML = totalQuantity;
+                 }
+
+                 displayCartPrice();
+                 displayCartQuantity();
+                 })
+
+             .catch((error) => {
+                 console.error("Fetch Error", error);
+             });
+     }
+
+    function newProduct(product, response) {
         const productFinal = product;
         productFinal.price = response;
-        // console.log(productFinal);
-        //console.log(productTest);
 
         const element = createProduct(productFinal);
         fragment.appendChild(element);
-        console.log("fin fonction testproduct");
     }
-
-    //console.log(products);
-
-    products.map(product => {
-        console.log(product);
-        console.log("item-mapping");
-
-        let productPrice = getProduct(product.id).price;
-        newProduct(product, productPrice);
-        console.log(productPrice);
-    });
-
-    console.log(fragment);
-    itemsContainer.appendChild(fragment);
-    //console.log(itemsContainer);
 }
+
+/** Création des produits du LS **/
 
 function createProduct(product) {
     const template = document.createElement('template');
@@ -105,3 +123,21 @@ function localStorageHas(key) {
     const item = localStorage.getItem(key);
     return item !== null;
 }
+
+/** Suppression de produit **/
+
+const removeButton = document.getElementsByClassName('deleteItem');
+removeButton.addEventListener("click", () => removeProduct());
+
+function removeProduct(item) {
+    const removeProduct = products.findIndex(product => product.id === item.id && product.color === item.color);
+    products.splice(removeProduct, 1);
+    console.log(item);
+}
+
+// function deleteItemFromCart(productId){
+//     const removeProduct = products.filter(item => item.id !== productId);
+//     localStorage.setItem(PRODUCTS_KEY_LOCALSTORAGE, JSON.stringify(removeProduct));
+// }
+//
+// deleteItemFromCart("107fb5b75607497b96722bda5b504926");
