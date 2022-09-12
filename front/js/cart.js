@@ -129,10 +129,19 @@ function localStorageHas(key) {
 const removeButton = document.getElementsByClassName('deleteItem');
 removeButton.addEventListener("click", () => removeProduct());
 
-function removeProduct(item) {
-    const removeProduct = products.findIndex(product => product.id === item.id && product.color === item.color);
-    products.splice(removeProduct, 1);
-    console.log(item);
+function removeProduct(id, color) {
+    products = JSON.parse(localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE));
+
+    products.forEach((product, index) => {
+        if (id === product.id && color === product.color) {
+            products.splice(index, 1);
+        }
+        localStorage.setItem(PRODUCTS_KEY_LOCALSTORAGE, JSON.stringify(product));
+    })
+
+    // const removeProduct = products.findIndex(product => product.id === item.id && product.color === item.color);
+    // products.splice(removeProduct, 1);
+    // console.log(item);
 }
 
 // function deleteItemFromCart(productId){
