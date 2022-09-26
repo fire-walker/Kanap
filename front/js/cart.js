@@ -1,13 +1,11 @@
 const PRODUCTS_KEY_LOCALSTORAGE = 'products';
 
 const cartTitle = document.getElementById('cart-title');
-let products = [];
+let products = JSON.parse(localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE));
 
 /** Affichage des produits stockés dans le LS **/
 
 if (localStorageHas(PRODUCTS_KEY_LOCALSTORAGE)) {
-    products = JSON.parse(localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE));
-
     displayProducts();
 } else {
     cartTitle.textContent = 'Le panier est vide';
@@ -18,73 +16,40 @@ const itemsContainer = document.getElementById('cart__items');
 function displayProducts() {
     const fragment = document.createDocumentFragment();
 
-     for (let i = 0; i < products.length; i++) {
-         const product = products[i];
-         //console.log(product);
+    for (let i = 0; i < products.length; i++) {
+        const product = products[i];
 
+        /** Fetch API pour récupérer le prix des produits qui n'est pas stocké dans le LS **/
+        fetch(`http://localhost:3000/api/products/` + product.id)
+            .then((res) => {
+                return res.json()
+            })
+            .then((apiProduct) => {
+                newProduct(product, apiProduct.price);
 
-         /** Fetch API pour récupérer le prix des produits qui n'est pas stocké dans le LS **/
+                if (i === products.length - 1) {
+                    itemsContainer.appendChild(fragment);
 
-         fetch(`http://localhost:3000/api/products/` + product.id)
-             .then((res) => {
-                 return res.json()
-             })
-             .then((apiProduct) => {
-                 newProduct(product, apiProduct.price);
-                 //console.log(apiProduct);
-                 //console.log(apiProduct.price);
+                    const removeButtons = document.getElementsByClassName('deleteItem');
+                    for (i = 0; i < removeButtons.length; i++) {
+                        const removeButton = removeButtons[i];
+                        removeButton.addEventListener("click", (e) => removeProduct(e));
+                    }
 
-                 if (i === products.length - 1) {
-                     itemsContainer.appendChild(fragment);
+                    const updateQuantity = document.getElementsByClassName("itemQuantity");
+                    for (i = 0; i < updateQuantity.length; i++) {
+                        const inputQuantity = updateQuantity[i];
+                        inputQuantity.addEventListener("change", (e) => changeQuantity(e));
+                    }
+                }
 
-                     const removeButtons = document.getElementsByClassName('deleteItem');
-                     console.log(removeButtons);
-                     for (i = 0; i < removeButtons.length; i++) {
-                         const removeButton = removeButtons[i];
-                         removeButton.addEventListener("click", (e) => removeProduct(e));
-                     }
-
-                     const updateQuantity = document.getElementsByClassName("itemQuantity");
-                     for (i = 0; i < updateQuantity.length; i++) {
-                         const inputQuantity = updateQuantity[i];
-                         inputQuantity.addEventListener("change", (e) => changeQuantity(e));
-                     }
-                 }
-
-                 /** Affichage des totaux prix et quantité **/
-
-                 function displayCartPrice() {
-                     let totalPrice = 0;
-                     const cartPrice = document.getElementById('totalPrice');
-
-                     products.forEach((product) => {
-                         const totalProductPrice = product.price * product.quantity;
-                         totalPrice += totalProductPrice;
-                     })
-
-                     cartPrice.innerHTML = totalPrice;
-                 }
-
-                 function displayCartQuantity() {
-                     let totalQuantity = 0;
-                     const cartQuantity = document.getElementById('totalQuantity');
-
-                     products.forEach((product) => {
-                         const totalProductQuantity = product.quantity;
-                         totalQuantity += totalProductQuantity;
-                     })
-
-                     cartQuantity.innerHTML = totalQuantity;
-                 }
-
-                 displayCartPrice();
-                 displayCartQuantity();
-                 })
-
-             .catch((error) => {
-                 console.error("Fetch Error", error);
-             });
-     }
+                displayCartPrice();
+                displayCartQuantity();
+            })
+            .catch((error) => {
+                console.error("Fetch Error", error);
+            });
+    }
 
     function newProduct(product, response) {
         const productFinal = product;
@@ -96,7 +61,6 @@ function displayProducts() {
 }
 
 /** Création des produits du LS **/
-
 function createProduct(product) {
     const template = document.createElement('template');
     template.innerHTML = `
@@ -126,7 +90,6 @@ function createProduct(product) {
     return template.content.firstElementChild;
 }
 
-
 /**
  * On vérifie que la clé existe dans le localStorage
  * @param {String} key
@@ -140,38 +103,33 @@ function localStorageHas(key) {
 /** Suppression de produit **/
 
 function removeProduct(event) {
-    console.log(event.target);
-    products = JSON.parse(localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE));
+    const article = event.target.closest("article");
 
-    let id = event.target.closest("article").dataset.id;
-    let color = event.target.closest("article").dataset.color;
+    let id = article.dataset.id;
+    let color = article.dataset.color;
+
     let index = products.findIndex(product => id === product.id && color === product.colors);
-    console.log(index);
 
     products.splice(index, 1);
-
-    // let newProduct = products;
-    //
-    // products.forEach((product, index) => {
-    //     if (id === product.id && color === product.color) {
-    //         newProduct = products.splice(index, 1);
-    //     }
-    // })
     localStorage.setItem(PRODUCTS_KEY_LOCALSTORAGE, JSON.stringify(products));
-    window.location.reload();
+    article.remove();
+
+    displayCartPrice();
+    displayCartQuantity();
 }
 
 /** Update de quantité **/
 
 function changeQuantity(event) {
-    products = JSON.parse(localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE));
+    const article = event.target.closest("article");
 
-    let id = event.target.closest("article").dataset.id;
-    let color = event.target.closest("article").dataset.color;
+    let id = article.dataset.id;
+    let color = article.dataset.color;
     let productCart = products.find(product => product.id === id && product.colors === color);
 
     if (productCart) {
         productCart.quantity = Number(event.target.value);
+
         if (productCart.quantity <= 0 || productCart.quantity >= 101) {
             alert("Veuillez entrer un nombre entre 1 et 100.");
             return;
@@ -179,9 +137,37 @@ function changeQuantity(event) {
     }
 
     localStorage.setItem(PRODUCTS_KEY_LOCALSTORAGE, JSON.stringify(products));
-    window.location.reload();
+
+    displayCartPrice();
+    displayCartQuantity();
 }
 
+/** Affichage des totaux prix et quantité **/
+function displayCartPrice() {
+    let totalPrice = 0;
+    const cartPrice = document.getElementById('totalPrice');
+
+    products.forEach((product) => {
+        console.log(product.price)
+        console.log(product.quantity)
+        const totalProductPrice = product.price * product.quantity;
+        totalPrice += totalProductPrice;
+    });
+
+    cartPrice.innerHTML = totalPrice;
+}
+
+function displayCartQuantity() {
+    let totalQuantity = 0;
+    const cartQuantity = document.getElementById('totalQuantity');
+
+    products.forEach((product) => {
+        const totalProductQuantity = product.quantity;
+        totalQuantity += totalProductQuantity;
+    });
+
+    cartQuantity.innerHTML = totalQuantity;
+}
 
 /** User form **/
 
@@ -202,7 +188,7 @@ function orderForm() {
         }
     };
 
-/** Validation des inputs en utilisant des regex **/
+    /** Validation des inputs en utilisant des regex **/
 
     const firstNameValidation = (value) => {
         if (value.match(/^[A-Za-zÀ-ÿ '.-]{2,15}$/)) {
@@ -210,32 +196,32 @@ function orderForm() {
             inputFirstName = value;
         } else {
             errorMessage('firstName',
-            'La saisie du prénom est invalide. ' +
-            'Il doit contenir entre 2 et 15 caractères, les caractères spéciaux autres que les lettres accentuées, ".", "-" et "\'" ne sont pas autorisés.');
-            return false;
-        }
-    };
-
-    const lastNameValidation = (value) => {
-        if (value.match(/^[A-Za-zÀ-ÿ '.-]{2,20}$/)) {
-            errorMessage('lastName', '', true);
-            inputLastName = value;
-        } else {
-            errorMessage('lastName',
                 'La saisie du prénom est invalide. ' +
                 'Il doit contenir entre 2 et 15 caractères, les caractères spéciaux autres que les lettres accentuées, ".", "-" et "\'" ne sont pas autorisés.');
             return false;
         }
     };
 
+    const lastNameValidation = (value) => {
+        if (value.match(/^[A-ZÀ-Ÿ '.-]{2,20}$/)) {
+            errorMessage('lastName', '', true);
+            inputLastName = value;
+        } else {
+            errorMessage('lastName',
+                'La saisie du prénom est invalide. ' +
+                'Il doit contenir entre 2 et 15 caractères en majuscule, les caractères spéciaux autres que les lettres accentuées, ".", "-" et "\'" ne sont pas autorisés.');
+            return false;
+        }
+    };
+
     const addressValidation = (value) => {
-        if (value.match(/^([0-9]*) ?([A-Za-zÀ-ÿ '.-]*) ?([0-9]{5}) ?([a-zA-Z]*)$/)) {
+        if (value.match(/^([0-9]*) ?([A-Za-zÀ-ÿ0-9 '.,-]*) ?$/)) {
             errorMessage('address', '', true);
             inputAddress = value;
         } else {
             errorMessage ('address',
                 'La saisie de l\'adresse est invalide. ' +
-                'Elle doit contenir un numéro de rue ainsi que son nom et le code postal de la ville');
+                'Elle doit contenir un numéro de rue ainsi que son nom.');
             return false;
         }
     };
@@ -281,15 +267,14 @@ function orderForm() {
     });
 }
 
-orderForm();
-
 function postOrderForm() {
     const submitButton = document.getElementById('order');
-    submitButton.addEventListener('click', () => {
+    submitButton.addEventListener('click', (e) => {
+        e.preventDefault();
 
         if (inputFirstName && inputLastName && inputAddress && inputCity && inputEmail) {
-            let orderProducts = [];
-            orderProducts.push(JSON.parse(localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE)));
+            // let orderProducts = [];
+            // products: products.map(product => product.id);
 
             const order = {
                 contact: {
@@ -299,18 +284,22 @@ function postOrderForm() {
                     address: inputAddress.value,
                     email: inputEmail.value,
                 },
-                products: orderProducts,
+                products: products.map(product => product.id),
             };
+            console.log(products);
 
             const options = {
                 method: "POST",
                 body: JSON.stringify(order),
                 headers: { "Content-Type": "application/json"},
             };
+
             fetch("http://localhost:3000/api/products/order", options)
                 .then((res) => res.json())
                 .then((data) => {
-                    document.location.href = "confirmation.html?id=" + data.orderId;
+                    const orderId = data.orderId;
+                    window.location.href = "confirmation.html" + "?orderId=" + orderId;
+
                 })
                 .catch(function (error) {
                     console.error("Fetch Error", error);
@@ -318,4 +307,6 @@ function postOrderForm() {
         }
     })
 }
+
+orderForm();
 postOrderForm();
