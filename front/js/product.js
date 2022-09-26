@@ -3,7 +3,6 @@ const PRODUCTS_KEY_LOCALSTORAGE = 'products';
 // Récupération des paramètres id de l"url
 const url = new URL(document.location.href).searchParams;
 const id = url.get("id");
-const cart = getCart();
 
 const button = document.getElementById("addToCart");
 const productColors = document.getElementById("colors-select");
@@ -48,6 +47,7 @@ const productQuantity = document.getElementById("item-quantity");
 })();
 
 function addToCart(product) {
+    const cart = getCart();
     const colors = productColors.value;
 
     // - Lorsqu’on ajoute un produit au panier, si celui-ci n'était pas déjà présent dans le panier, on ajoute un nouvel élément dans l’array.
