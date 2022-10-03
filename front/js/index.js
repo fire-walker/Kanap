@@ -1,4 +1,6 @@
-// Récupération des produits
+/**
+ * Récupération des produits disponibles dans l'API
+ */
 fetch("http://localhost:3000/api/products")
     .then((res) => {
         if (res.ok) {
@@ -14,9 +16,9 @@ fetch("http://localhost:3000/api/products")
     });
 
 
-/*
-* Fonction d'affichage des produits sur la page
-*/
+/**
+ * Fonction d'affichage des produits sur la page
+ */
 function displayProducts(products) {
     // On récupére l'élément items situé dans le DOM
     const itemsContainer = document.getElementById('items');
@@ -30,9 +32,9 @@ function displayProducts(products) {
     itemsContainer.appendChild(fragment);
 }
 
-/*
-* Fonction de création des produits de manière dynamique
-*/
+/**
+ * Fonction de création des produits de manière dynamique
+ */
 function createProduct(product) {
     const template = document.createElement('template');
     template.innerHTML = `
