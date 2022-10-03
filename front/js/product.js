@@ -1,6 +1,8 @@
 const PRODUCTS_KEY_LOCALSTORAGE = 'products';
 
-// Récupération des paramètres id de l"url
+/**
+ * Récupération des paramètres id présents de l"url
+ */
 const url = new URL(document.location.href).searchParams;
 const id = url.get("id");
 
@@ -20,8 +22,9 @@ const productQuantity = document.getElementById("item-quantity");
     /**
      * Ajout d'un événement sur le bouton qui ajoute un produit au panier
      * - Récupérer toutes les informations nécessaires afin de créer un objet produit
-     *   - altxt, id, image, couleur, description, quantité, prix, titre
+     * - altxt, id, image, couleur, description, quantité, prix, titre
      * - Ajouter le produit au panier
+     * - Ajout d'évènement sur les champs de couleurs et de quantité
      */
     button.addEventListener("click", () => {
         const quantity = Number(productQuantity.value);
@@ -39,6 +42,7 @@ const productQuantity = document.getElementById("item-quantity");
             };
 
             addToCart(product);
+            alert("Le produit a bien été ajouté au panier");
         }
     });
 
@@ -46,16 +50,19 @@ const productQuantity = document.getElementById("item-quantity");
     productQuantity.addEventListener("change", buttonColorQuantityChange);
 })();
 
+/**
+ * Fonction d'ajout des produits au panier
+ * - Lorsqu’on ajoute un produit au panier, si celui-ci n'était pas déjà présent dans le panier, on ajoute un nouvel élément dans l’array.
+ * - Lorsqu’on ajoute un produit au panier, si celui-ci était déjà présent dans le panier (même id + même couleur), on incrémente simplement la quantité du produit correspondant dans l’array
+ * - Si un objet existe déjà dans le LS et correspond à l'objet que l'on souhaite rajouter, modifier la quantité
+ * - Sinon, on rajoute le produit dans le localStorage.
+ */
 function addToCart(product) {
     const cart = getCart();
     const colors = productColors.value;
 
-    // - Lorsqu’on ajoute un produit au panier, si celui-ci n'était pas déjà présent dans le panier, on ajoute un nouvel élément dans l’array.
-    // - Lorsqu’on ajoute un produit au panier, si celui-ci était déjà présent dans le panier (même id + même couleur), on incrémente simplement la quantité du produit correspondant dans l’array
     let productCart = cart.find(p => p.id === id && p.colors === colors);
 
-    // Si un objet existe déjà dans le LS et correspond à l'objet que l'on souhaite rajouter, modifier la quantité
-    // Sinon, on rajoute le produit dans le localStorage.
     if (productCart) {
         productCart.quantity = productCart.quantity + product.quantity;
     } else {
@@ -65,7 +72,11 @@ function addToCart(product) {
     saveCart(cart);
 }
 
-// Requête API d"un seul produit par son id
+/**
+ * Fonction de requête API d'un seul produit par son id
+ * @async
+ */
+
 async function getProduct(id) {
     return await fetch(`http://localhost:3000/api/products/${id}`)
         .then((res) => {
@@ -79,6 +90,10 @@ async function getProduct(id) {
         });
 }
 
+/**
+ * Fonction de création du produit dont l'id a été fetch
+ * @async
+ */
 async function createProduct(id) {
     const product = await getProduct(id);
 
@@ -107,6 +122,9 @@ async function createProduct(id) {
     productTemplate.innerHTML = productPhoto;
 }
 
+/**
+ * Fonction de sauvegarde du produit dans le Local Storage
+ */
 function saveCart(products) {
     localStorage.setItem(PRODUCTS_KEY_LOCALSTORAGE, JSON.stringify(products));
 }
@@ -119,6 +137,11 @@ function hasCart() {
     return !!localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE);
 }
 
+/**
+ * Fonction pour activer ou désactiver le bouton d'ajout au panier
+ * - Si aucune couleur ou aucune quantité n'est choisie le bouton reste désactivé
+ * - Si les deux champs sont remplis le bouton s'active et le produit peut être ajouté
+ */
 function buttonColorQuantityChange() {
     const colorsDefaultValue = 'Sélectionnez une couleur';
     const colorsSelectedValue = productColors.value;
