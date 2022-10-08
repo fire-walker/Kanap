@@ -1,6 +1,4 @@
-/**
- * Récupération des produits disponibles dans l'API
- */
+// Récupération des produits disponibles dans l'API
 fetch("http://localhost:3000/api/products")
     .then((res) => {
         if (res.ok) {
@@ -8,32 +6,34 @@ fetch("http://localhost:3000/api/products")
         }
     })
     .then((products) => {
-        console.log(products);
         displayProducts(products);
     })
     .catch((error) => {
-        alert(error); // Une erreur est survenue
+        alert("Aucun produit n'a pu être trouvé. Assurez-vous d'avoir lancé le serveur local avant de recharger la page."); // Une erreur est survenue
     });
 
 
 /**
  * Fonction d'affichage des produits sur la page
+ * @param {Response} products
  */
 function displayProducts(products) {
-    // On récupére l'élément items situé dans le DOM
+    // On récupère l'élément items situé dans le DOM
     const itemsContainer = document.getElementById('items');
     const fragment = document.createDocumentFragment();
 
     for (let product of products) {
-        const element = createProduct(product);
-        fragment.appendChild(element);
+        const link = createProduct(product);
+        fragment.appendChild(link);
     }
 
     itemsContainer.appendChild(fragment);
 }
 
 /**
- * Fonction de création des produits de manière dynamique
+ * Convertir une chaîne de caractères en élément HTML
+ * @param {Object} product
+ * @return {HTMLElement}
  */
 function createProduct(product) {
     const template = document.createElement('template');

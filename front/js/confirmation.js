@@ -1,5 +1,5 @@
 /**
- * Récupération des paramètres id présents dans l"url
+ * Récupération des paramètres id présents dans l'url
  * - Afficher l'id dans la page de confirmation
  */
 const url = new URL(document.location.href).searchParams;
