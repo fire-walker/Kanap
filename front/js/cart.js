@@ -1,15 +1,15 @@
+import { localStorageSave, localStorageGet, localStorageHas } from "./ls.js";
+
 const PRODUCTS_KEY_LOCALSTORAGE = 'products';
 
 const cartTitle = document.getElementById('cart-title');
 const itemsContainer = document.getElementById('cart__items');
 const form = document.getElementById('formOrder');
 
-let products = JSON.parse(localStorage.getItem(PRODUCTS_KEY_LOCALSTORAGE));
+let products = localStorageGet();
 
-/**
- * Affichage des produits stockés dans le LS
- */
-if (localStorageHas(PRODUCTS_KEY_LOCALSTORAGE)) {
+// Affichage des produits stockés dans le LS
+if (localStorageHas()) {
     init();
 } else {
     cartTitle.textContent = 'Le panier est vide';
@@ -40,9 +40,7 @@ function init() {
         email: null
     };
 
-    /**
-     * Validation des inputs en utilisant des regex
-     */
+    // Validation des inputs en utilisant des regex
     const firstNameValidation = (value) => {
         if (value.match(/^[A-Za-zÀ-ÿ '.-]{2,15}$/)) {
             errorMessage('firstName', '', true);
@@ -100,7 +98,7 @@ function init() {
     };
 
     /**
-     * Ajout d'évènement sur chaque champs du formulaire
+     * Ajout d'évènement sur chaque champ du formulaire
      * Ajout d'un événement sur le bouton qui soumet le formulaire
      */
     form.firstName.addEventListener('input', (e) => {
@@ -140,15 +138,14 @@ function displayProducts() {
     for (let i = 0; i < products.length; i++) {
         const product = products[i];
 
-        /**
-         * Fetch API pour récupérer le prix des produits qui n'est pas stocké dans le LS
-         */
-        fetch(`http://localhost:3000/api/products/` + product.id)
+        // Fetch API pour récupérer le prix des produits qui n'est pas stocké dans le LS
+        fetch(`http://localhost:3000/api/products/${product.id}`)
             .then((res) => {
                 return res.json()
             })
             .then((apiProduct) => {
-                newProduct(product, apiProduct.price);
+                const article = createProduct(product, apiProduct.price);
+                fragment.appendChild(article);
 
                 if (i === products.length - 1) {
                     itemsContainer.appendChild(fragment);
@@ -159,34 +156,31 @@ function displayProducts() {
                         removeButton.addEventListener("click", (e) => removeProduct(e));
                     }
 
-                    const updateQuantity = document.getElementsByClassName("itemQuantity");
+                    const updateQuantity = document.getElementsByClassName('itemQuantity');
                     for (i = 0; i < updateQuantity.length; i++) {
                         const inputQuantity = updateQuantity[i];
                         inputQuantity.addEventListener("change", (e) => changeQuantity(e));
                     }
                 }
 
-                displayCartPrice();
                 displayCartQuantity();
+                displayCartPrice();
             })
             .catch((error) => {
                 console.error("Fetch Error", error);
             });
     }
-
-    function newProduct(product, response) {
-        const productFinal = product;
-        productFinal.price = response;
-
-        const element = createProduct(productFinal);
-        fragment.appendChild(element);
-    }
 }
 
 /**
- * Fonction de création des produits stockés dans le Local Storage de manière dynamique
+ * Fonction de création des produits stockés dans le localStorage de manière dynamique
+ * @param {Object} product
+ * @param {Number} price
+ * @return {HTMLElement}
  */
-function createProduct(product) {
+function createProduct(product, price) {
+    product.price = price;
+
     const template = document.createElement('template');
     template.innerHTML = `
     <article class="cart__item" data-id="${product.id}" data-color="${product.colors}">
@@ -197,7 +191,7 @@ function createProduct(product) {
               <div class="cart__item__content__description">
                 <h2>${product.title}</h2>
                 <p>${product.colors}</p>
-                <p>${product.price}</p>
+                <p>${price}€</p>
               </div>
               <div class="cart__item__content__settings">
                 <div class="cart__item__content__settings__quantity">
@@ -216,22 +210,12 @@ function createProduct(product) {
 }
 
 /**
- * On vérifie que la clé existe dans le localStorage
- * @param {String} key
- * @return {Boolean}
- */
-function localStorageHas(key) {
-    const item = localStorage.getItem(key);
-    return item !== null;
-}
-
-/**
  * Fonction de suppression des produits
  * - Récupérer l'id et la couleur du produit voulu
  * - Modification du contenu du tableau en supprimant le produit
  * - Affichage des nouveaux totaux prix et quantité
+ * @param {Event} event
  */
-
 function removeProduct(event) {
     const article = event.target.closest("article");
 
@@ -241,19 +225,19 @@ function removeProduct(event) {
     let index = products.findIndex(product => id === product.id && color === product.colors);
 
     products.splice(index, 1);
-    localStorage.setItem(PRODUCTS_KEY_LOCALSTORAGE, JSON.stringify(products));
     article.remove();
+    localStorageSave(products);
 
     displayCartPrice();
     displayCartQuantity();
 }
 
 /**
- * Fonction de suppression des produits
+ * Fonction d'update de quantité
  * - Récupérer l'id et la couleur du produit voulu
  * - Affichage des nouveaux totaux prix et quantité
+ * @param {Event} event
  */
-
 function changeQuantity(event) {
     const article = event.target.closest("article");
 
@@ -270,7 +254,7 @@ function changeQuantity(event) {
         }
     }
 
-    localStorage.setItem(PRODUCTS_KEY_LOCALSTORAGE, JSON.stringify(products));
+    localStorageSave(products);
 
     displayCartPrice();
     displayCartQuantity();
@@ -292,7 +276,7 @@ function displayCartPrice() {
 }
 
 /**
- * Fonction d'affichage du total quantité
+ * Fonction d'affichage de la quantité totale
  */
 function displayCartQuantity() {
     let totalQuantity = 0;
@@ -309,9 +293,10 @@ function displayCartQuantity() {
 /**
  * Fonction d'envoi de la commande
  * - Stocker des informations nécessaire dans l'objet contact
- * - Envoiyer les données à l'API
- * - Récuperer l'orderId fournit grâce à la méthode POST
+ * - Envoyer les données à l'API
+ * - Récupérer l'orderId fournit grâce à la méthode POST
  * - Rediriger vers la page de confirmation avec l'orderId présent dans l'url
+ * @param {Object} contact
  */
 function sendOrder(contact) {
     const body = {
