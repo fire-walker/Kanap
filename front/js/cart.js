@@ -1,4 +1,4 @@
-import { localStorageSave, localStorageGet, localStorageHas } from "./ls.js";
+import { localStorageSave, localStorageGet, localStorageHas } from "./localstorage.js";
 
 const PRODUCTS_KEY_LOCALSTORAGE = 'products';
 
@@ -49,7 +49,7 @@ function init() {
             errorMessage('firstName',
                 'La saisie du prénom est invalide. ' +
                 'Il doit contenir entre 2 et 15 caractères, les caractères spéciaux autres que les lettres accentuées, ".", "-" et "\'" ne sont pas autorisés.');
-            return false;
+            contact.firstName = null;
         }
     };
     const lastNameValidation = (value) => {
@@ -60,7 +60,7 @@ function init() {
             errorMessage('lastName',
                 'La saisie du prénom est invalide. ' +
                 'Il doit contenir entre 2 et 15 caractères en majuscule, les caractères spéciaux autres que les lettres accentuées, ".", "-" et "\'" ne sont pas autorisés.');
-            return false;
+            contact.lastName = null;
         }
     };
     const addressValidation = (value) => {
@@ -71,7 +71,7 @@ function init() {
             errorMessage ('address',
                 'La saisie de l\'adresse est invalide. ' +
                 'Elle doit contenir un numéro de rue ainsi que son nom, un lieu dit ou une commune.');
-            return false;
+            contact.address = null;
         }
     };
     const cityValidation = (value) => {
@@ -82,7 +82,7 @@ function init() {
             errorMessage('city',
                 'La saisie de la ville est invalide. ' +
                 'Elle doit contenir entre 2 et 45 caractères, les caractères spéciaux autorisés sont ".", "-" et "\'".');
-            return false;
+            contact.city = null;
         }
     };
     const emailValidation = (value) => {
@@ -93,7 +93,7 @@ function init() {
             errorMessage ('email',
                 'La saisie de l\'email est invalide. ' +
                 'L\'email doit être au format johndoe@gmail.com. Il peut contenir les caractères spéciaux "_", "-" et "." uniquement');
-            return false;
+            contact.email = null;
         }
     };
 
@@ -272,7 +272,7 @@ function displayCartPrice() {
         totalPrice += totalProductPrice;
     });
 
-    cartPrice.innerHTML = totalPrice;
+    cartPrice.textContent = totalPrice;
 }
 
 /**
@@ -287,7 +287,7 @@ function displayCartQuantity() {
         totalQuantity += totalProductQuantity;
     });
 
-    cartQuantity.innerHTML = totalQuantity;
+    cartQuantity.textContent = totalQuantity;
 }
 
 /**
