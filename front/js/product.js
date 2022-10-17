@@ -1,4 +1,4 @@
-import { localStorageSave, localStorageGet } from "./ls.js";
+import { localStorageSave, localStorageGet } from "./localstorage.js";
 
 /**
  * Récupération des paramètres id présents de l'url
